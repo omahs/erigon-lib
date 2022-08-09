@@ -147,7 +147,7 @@ func (m *memoryMutationCursor) skipIntersection(memKey, memValue, dbKey, dbValue
 			(dupsortOffset != 0 && len(memValue) >= dupsortOffset && len(dbValue) >= dupsortOffset && bytes.Equal(memValue[:dupsortOffset], dbValue[:dupsortOffset]))
 		newLogic := !dupSort || dupsortOffset != 0 || bytes.Equal(memValue, dbValue)
 		if oldLogic != newLogic {
-			log.Info(fmt.Sprintf("skipIntersection table=%s oldLogic=%t newLogic=%t key=%x memValue=%x dbValue=%x", m.table, oldLogic, newLogic, memKey, memValue, dbValue))
+			log.Info(fmt.Sprintf("LLL skipIntersection table=%s oldLogic=%t newLogic=%t key=%x memValue=%x dbValue=%x", m.table, oldLogic, newLogic, memKey, memValue, dbValue))
 		}
 		if oldLogic {
 			if newDbKey, newDbValue, err = m.getNextOnDb(t); err != nil {
@@ -227,7 +227,7 @@ func (m *memoryMutationCursor) NextDup() ([]byte, []byte, error) {
 			return nil, nil, err
 		}
 		resK, resV, err := m.resolveCursorPriority(m.currentMemEntry.key, m.currentMemEntry.value, k, v, Dup)
-		log.Info(fmt.Sprintf("NextDup1 table=%s resK=%x resV=%x", m.table, resK, resV))
+		log.Info(fmt.Sprintf("LLL NextDup1 table=%s resK=%x resV=%x", m.table, resK, resV))
 		return resK, resV, err
 	}
 
@@ -237,7 +237,7 @@ func (m *memoryMutationCursor) NextDup() ([]byte, []byte, error) {
 	}
 
 	resK, resV, err := m.resolveCursorPriority(memK, memV, m.currentDbEntry.key, m.currentDbEntry.value, Dup)
-	log.Info(fmt.Sprintf("NextDup2 table=%s resK=%x resV=%x", m.table, resK, resV))
+	log.Info(fmt.Sprintf("LLL NextDup2 table=%s resK=%x resV=%x", m.table, resK, resV))
 	return resK, resV, err
 }
 
@@ -301,15 +301,24 @@ func (m *memoryMutationCursor) SeekExact(seek []byte) ([]byte, []byte, error) {
 }
 
 func (m *memoryMutationCursor) Put(k, v []byte) error {
+	if m.table == kv.HashedStorage {
+		log.Info(fmt.Sprintf("LLL Put k=%x v=%x", k, v))
+	}
 	return m.mutation.Put(m.table, common.Copy(k), common.Copy(v))
 }
 
 func (m *memoryMutationCursor) Append(k []byte, v []byte) error {
+	if m.table == kv.HashedStorage {
+		log.Info(fmt.Sprintf("LLL Append k=%x v=%x", k, v))
+	}
 	return m.mutation.Append(m.table, common.Copy(k), common.Copy(v))
 
 }
 
 func (m *memoryMutationCursor) AppendDup(k []byte, v []byte) error {
+	if m.table == kv.HashedStorage {
+		log.Info(fmt.Sprintf("LLL AppendDup k=%x v=%x", k, v))
+	}
 	return m.memCursor.AppendDup(common.Copy(k), common.Copy(v))
 }
 
@@ -368,7 +377,7 @@ func (m *memoryMutationCursor) SeekBothRange(key, value []byte) ([]byte, error) 
 		return nil, err
 	}
 	_, retValue, err := m.resolveCursorPriority(key, memValue, key, dbValue, Normal)
-	log.Info(fmt.Sprintf("SeekBothRange table=%s k=%x v=%x", m.table, key, retValue))
+	log.Info(fmt.Sprintf("LLL SeekBothRange table=%s k=%x v=%x", m.table, key, retValue))
 	return retValue, err
 }
 
