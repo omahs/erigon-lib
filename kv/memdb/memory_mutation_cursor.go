@@ -149,7 +149,7 @@ func (m *memoryMutationCursor) skipIntersection(memKey, memValue, dbKey, dbValue
 		if oldLogic != newLogic {
 			log.Info(fmt.Sprintf("skipIntersection table=%s oldLogic=%t newLogic=%t key=%x memValue=%x dbValue=%x", m.table, oldLogic, newLogic, memKey, memValue, dbValue))
 		}
-		if newLogic {
+		if oldLogic {
 			if newDbKey, newDbValue, err = m.getNextOnDb(t); err != nil {
 				return
 			}
