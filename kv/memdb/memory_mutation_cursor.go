@@ -134,15 +134,21 @@ func (m *memoryMutationCursor) skipIntersection(memKey, memValue, dbKey, dbValue
 	newDbKey = dbKey
 	newDbValue = dbValue
 	config, ok := kv.ChaindataTablesCfg[m.table]
-	dupSort := ok && ((config.Flags & kv.DupSort) != 0)
-	autoKeyConversion := ok && config.AutoDupSortKeysConversion
+	dupsortOffset := 0
+	if ok && config.AutoDupSortKeysConversion {
+		dupsortOffset = config.DupFromLen - config.DupToLen
+	}
 	// Check for duplicates
 	if bytes.Equal(memKey, dbKey) {
-		if !dupSort || autoKeyConversion {
+		if (config.Flags & kv.DupSort) == 0 {
 			if newDbKey, newDbValue, err = m.getNextOnDb(t); err != nil {
 				return
 			}
 		} else if bytes.Equal(memValue, dbValue) {
+			if newDbKey, newDbValue, err = m.getNextOnDb(t); err != nil {
+				return
+			}
+		} else if dupsortOffset != 0 && len(memValue) >= dupsortOffset && len(dbValue) >= dupsortOffset && bytes.Equal(memValue[:dupsortOffset], dbValue[:dupsortOffset]) {
 			if newDbKey, newDbValue, err = m.getNextOnDb(t); err != nil {
 				return
 			}
