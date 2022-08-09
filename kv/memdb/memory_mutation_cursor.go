@@ -149,7 +149,7 @@ func (m *memoryMutationCursor) skipIntersection(memKey, memValue, dbKey, dbValue
 		if oldLogic != newLogic {
 			log.Info(fmt.Sprintf("skipIntersection table=%s oldLogic=%t newLogic=%t key=%x memValue=%x dbValue=%x", m.table, oldLogic, newLogic, memKey, memValue, dbValue))
 		}
-		if oldLogic {
+		if newLogic {
 			if newDbKey, newDbValue, err = m.getNextOnDb(t); err != nil {
 				return
 			}
@@ -226,7 +226,9 @@ func (m *memoryMutationCursor) NextDup() ([]byte, []byte, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		return m.resolveCursorPriority(m.currentMemEntry.key, m.currentMemEntry.value, k, v, Dup)
+		resK, resV, err := m.resolveCursorPriority(m.currentMemEntry.key, m.currentMemEntry.value, k, v, Dup)
+		log.Info(fmt.Sprintf("NextDup1 table=%s resK=%x resV=%x", m.table, resK, resV))
+		return resK, resV, err
 	}
 
 	memK, memV, err := m.memCursor.NextDup()
@@ -234,7 +236,9 @@ func (m *memoryMutationCursor) NextDup() ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
-	return m.resolveCursorPriority(memK, memV, m.currentDbEntry.key, m.currentDbEntry.value, Dup)
+	resK, resV, err := m.resolveCursorPriority(memK, memV, m.currentDbEntry.key, m.currentDbEntry.value, Dup)
+	log.Info(fmt.Sprintf("NextDup2 table=%s resK=%x resV=%x", m.table, resK, resV))
+	return resK, resV, err
 }
 
 // Seek move pointer to a key at a certain position.
@@ -364,6 +368,7 @@ func (m *memoryMutationCursor) SeekBothRange(key, value []byte) ([]byte, error) 
 		return nil, err
 	}
 	_, retValue, err := m.resolveCursorPriority(key, memValue, key, dbValue, Normal)
+	log.Info(fmt.Sprintf("SeekBothRange table=%s k=%x v=%x", m.table, key, retValue))
 	return retValue, err
 }
 
